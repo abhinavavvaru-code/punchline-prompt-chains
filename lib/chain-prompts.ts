@@ -35,7 +35,7 @@ export function stepSystemPrompt(chainName: string, step: RunStep, index: number
     ...(final ? [
       'This is the final step. Its result is published as captions on the image.',
       'Follow the step instruction for content and tone, but this output contract always wins: return exactly three distinct captions, each 5–140 characters and at most 10 words.',
-      'If the instruction asks for a different number of captions, return the three strongest. No numbering, hashtags, explanations or quotation marks around captions.',
+      'If the instruction asks for more captions, put the three strongest first; only the first three valid captions are saved. No numbering, hashtags, explanations or quotation marks around captions.',
       'Return only a JSON object: {"captions":["First caption","Second caption","Third caption"]}.',
     ] : [
       'Do exactly what the step instruction asks. Your text becomes the input of the next step, so be concrete and self-contained.',
@@ -70,11 +70,21 @@ export function parseIntermediate(content: string): string | null {
   return output
 }
 
+// Saves exactly three captions. A step may ask for more (e.g. "five captions");
+// the first three that pass validation are kept, in the model's own order.
 export function parseCaptions(content: string): [string, string, string] | null {
   const parsed = parseJson(content)
-  if (!parsed || !Array.isArray(parsed.captions) || parsed.captions.length !== 3) return null
-  const captions = parsed.captions.map((value) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').replace(/^["“]|["”]$/g, '').trim() : '')
-  if (captions.some((value) => value.length < 5 || value.length > 140 || value.split(/\s+/).length > 10 || CONTROL.test(value))) return null
-  if (new Set(captions.map((value) => value.toLocaleLowerCase('en-US'))).size !== 3) return null
-  return captions as [string, string, string]
+  if (!parsed || !Array.isArray(parsed.captions) || parsed.captions.length < 3 || parsed.captions.length > 10) return null
+  const seen = new Set<string>()
+  const kept: string[] = []
+  for (const raw of parsed.captions) {
+    if (typeof raw !== 'string') continue
+    const value = raw.trim().replace(/\s+/g, ' ').replace(/^["“]|["”]$/g, '').trim()
+    if (value.length < 5 || value.length > 140 || value.split(/\s+/).length > 10 || CONTROL.test(value)) continue
+    const key = value.toLocaleLowerCase('en-US')
+    if (seen.has(key)) continue
+    seen.add(key); kept.push(value)
+    if (kept.length === 3) return kept as [string, string, string]
+  }
+  return null
 }

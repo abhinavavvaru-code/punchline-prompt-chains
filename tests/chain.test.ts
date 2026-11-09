@@ -29,7 +29,11 @@ test('output validators reject malformed, overlong and duplicate output', () => 
   assert.deepEqual(parseCaptions('{"captions":["One funny caption","Two funny caption","Three funny caption"]}'), ['One funny caption', 'Two funny caption', 'Three funny caption'])
   assert.equal(parseCaptions('{"captions":["a","b","c"]}'), null)
   assert.equal(parseCaptions('{"captions":["Same caption here","same caption here","Other caption here"]}'), null)
+  // A step that asks for five keeps the first three valid, skipping invalid/duplicate ones.
+  assert.deepEqual(parseCaptions(JSON.stringify({ captions: ['First good caption', 'x', 'first good caption', 'Second good caption', 'Third good caption', 'Fourth good caption'] })),
+    ['First good caption', 'Second good caption', 'Third good caption'])
   assert.equal(parseCaptions('{"captions":["one two three four five six seven eight nine ten eleven","b caption","c caption"]}'), null)
+  assert.equal(parseCaptions(JSON.stringify({ captions: Array.from({ length: 11 }, (_, i) => `Caption number ${i}`) })), null)
   assert.equal(parseCaptions('{"captions":["Only two here","Second one here"]}'), null)
 })
 

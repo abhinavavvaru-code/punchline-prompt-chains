@@ -213,7 +213,7 @@ export default function ChainEditor({ initial, models, initialMedia }: { initial
                         <span className="meta">{step.model_name} · temp {Number(step.temperature)} · {step.max_output_tokens} tokens{step.is_active ? '' : ' · inactive'}</span>
                       </div>
                       <p className="prompt">{step.system_prompt}</p>
-                      <p className="meta io">{index === 0 ? 'Input: the image + run context' : `Input: output of step ${index}`} → {index === steps.length - 1 ? 'Output: three captions (saved to Punchline)' : `Output: text for step ${index + 2}`}</p>
+                      <p className="meta io">{index === 0 ? 'Input: the image + run context' : `Input: output of step ${index}`} → {index === steps.length - 1 ? 'Output: captions — the first three valid are saved to Punchline' : `Output: text for step ${index + 2}`}</p>
                       <div className="step-actions">
                         <button className="icon-button" onClick={() => move(step, index - 1)} disabled={index === 0 || Boolean(busy)} aria-label={`Move ${step.name} up`}>↑</button>
                         <button className="icon-button" onClick={() => move(step, index + 1)} disabled={index === steps.length - 1 || Boolean(busy)} aria-label={`Move ${step.name} down`}>↓</button>
